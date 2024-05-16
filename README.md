@@ -76,7 +76,7 @@ WHERE SENTIMENT='negative';
 Then, you can run the Telegram bot:
 
 ```bash
-python telegram_bot.py
+python3 telegram_bot.py
 ```
 
 ## License

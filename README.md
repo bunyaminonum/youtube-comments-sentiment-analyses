@@ -1,4 +1,3 @@
-```markdown
 # YouTube Comment Analysis and Telegram Bot
 
 This project collects YouTube video comments, performs sentiment analysis, and shares "negative" results on a Telegram channel. The project consists of three main components:

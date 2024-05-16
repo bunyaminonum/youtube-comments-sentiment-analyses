@@ -1,0 +1,15 @@
+# Python dosyaları
+*.pyc
+__pycache__/
+
+# Yapılandırma dosyaları
+producer_config.json
+sentiment_analysis_config.json
+telegram_bot_config.json
+
+# Günlük dosyaları
+*.log
+
+# Geçici dosyalar
+*.swp
+*~

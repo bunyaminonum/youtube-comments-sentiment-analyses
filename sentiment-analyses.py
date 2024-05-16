@@ -1,84 +1,117 @@
 import os
 import json
 import time
+import logging
 from confluent_kafka import Consumer, Producer
 import google.generativeai as genai
+import backoff
 
-# İşlenmiş mesajların ID'lerini saklamak için bir set oluşturun
-processed_messages = set()
+def read_config(file_path):
+  """Reads the configuration file."""
+  with open(file_path) as f:
+    return json.load(f)
 
-# Yapılandırma dosyasını oku
-with open('config.json') as f:
-    config = json.load(f)
+def setup_logging(log_file):
+  """Sets up logging."""
+  logging.basicConfig(filename=log_file, level=logging.INFO, 
+                      format='%(asctime)s - %(levelname)s - %(message)s')
 
-# API anahtarını ayarla
-gemini_api_key = config['gemini_api_key']
+def configure_gemini(api_key):
+  """Configures the Gemini API."""
+  genai.configure(api_key=api_key)
+  return genai.GenerativeModel('gemini-pro')
 
-# Gemini API ayarları
-genai.configure(api_key=gemini_api_key)
-model = genai.GenerativeModel('gemini-pro')
+def create_consumer(servers, group_id, offset_reset, topic):
+  """Creates a Kafka consumer."""
+  consumer = Consumer({
+      'bootstrap.servers': servers,
+      'group.id': group_id,
+      'auto.offset.reset': offset_reset
+  })
+  consumer.subscribe([topic])
+  return consumer
 
-# Kafka ayarları
-kafka_bootstrap_servers = config['kafka_bootstrap_servers']
-input_topic = 'youtube_comments'
-output_topic = 'youtube_sentiments'
+def create_producer(servers):
+  """Creates a Kafka producer."""
+  return Producer({
+      'bootstrap.servers': servers,
+      'enable.idempotence': 'true',
+      'acks': 'all'
+  })
 
-# Kafka tüketicisini başlat
-consumer = Consumer({
-    'bootstrap.servers': kafka_bootstrap_servers,
-    'group.id': 'youtube_comments_group',
-    'auto.offset.reset': 'earliest'
-})
-consumer.subscribe([input_topic])
+def delivery_report(err, msg):
+  """Callback function to handle Kafka message delivery reports."""
+  if err is not None:
+    logging.error(f'Message delivery failed: {err}')
+  else:
+    logging.info(f'Message delivered to {msg.topic()} [{msg.partition()}]')
 
-# Kafka üreticisini başlat
-producer = Producer({
-    'bootstrap.servers': kafka_bootstrap_servers,
-    'enable.idempotence': 'true',
-    'acks': 'all'
-})
+def analyze_sentiment(comment, model):
+  """Performs sentiment analysis on a comment."""
+  try:
+    prompt = "This is a sentiment analysis task. Please respond with a single word: 'positive', 'negative', or 'neutral'. Do not provide any additional information or explanation. Here is the comment: '{}'".format(comment)
+    response = model.generate_content(prompt)
+    return response.text.strip()
+  except Exception as e:
+    logging.error(f'Error during sentiment analysis: {e}')
+    raise e # Re-raise exception for backoff
 
-# Yorumları tüket ve duygu analizi yap
-while True:
+def process_messages(consumer, producer, model, output_topic):
+  """Processes messages from the consumer."""
+  processed_messages = set()
+  while True:
     message = consumer.poll(1.0)
     if message is None:
-        continue
+      continue
     if message.error():
-        print("Consumer error: {}".format(message.error()))
-        continue
+      logging.error(f"Consumer error: {message.error()}")
+      continue
 
-    message_id = json.loads(message.value().decode('utf-8'))['id']
-    
-    # Eğer mesaj daha önce işlendi ise, tekrar işlenmez
-    if message_id in processed_messages:
-        continue
-
-    comment = json.loads(message.value().decode('utf-8'))['text']
-    
-    # Gemini API ile duygu analizi yap
-    prompt = "This is a sentiment analysis task. Please respond with a single word: 'positive', 'negative', or 'neutral'. Do not provide any additional information or explanation. Here is the comment: '{}'".format(comment)
-
-    response = model.generate_content(prompt)
-    
-    # Duygu analizi sonucunu ve orijinal yorumu içeren yeni bir mesaj oluştur
-    new_message = json.loads(message.value().decode('utf-8'))
     try:
-        new_message['sentiment'] = response.text
-    except ValueError:
-        new_message['sentiment'] = 'neutral'  # Varsayılan değer
+      message_data = json.loads(message.value().decode('utf-8'))
+      message_id = message_data['id']
 
-    # Yeni mesajı başka bir Kafka topicine gönder
-    producer.produce(output_topic, key=message_id, value=json.dumps(new_message).encode('utf-8'))
+      # If the message has already been processed, skip it
+      if message_id in processed_messages:
+        continue
 
-    # Mesajın işlendiğini belirtmek için ID'yi set'e ekleyin
-    processed_messages.add(message_id)
+      comment = message_data['text']
 
-    # Offset'i commit et
-    consumer.commit()
+      # Perform sentiment analysis using Gemini API
+      sentiment = analyze_sentiment(comment, model)
 
-    # Her çağrıdan sonra belirli bir süre bekleyin
-    time.sleep(2)  # 2 saniye bekleyin
+      # Create a new message containing the sentiment analysis result and original comment
+      new_message = message_data.copy()
+      new_message['sentiment'] = sentiment
 
-consumer.close()
-# Kafka üreticisini durdur
-producer.flush()
+      # Send the new message to another Kafka topic
+      producer.produce(output_topic, key=message_id, value=json.dumps(new_message).encode('utf-8'), callback=delivery_report)
+
+      # Add the message ID to the set to mark it as processed
+      processed_messages.add(message_id)
+
+      # Commit the offset
+      consumer.commit()
+
+      logging.info(f"Comment {message_id} processed, sentiment: {sentiment}")
+
+    except Exception as e:
+      logging.error(f"Error processing message: {e}")
+
+    # Wait for a certain amount of time after each call
+    time.sleep(3) # Wait for 2 seconds
+
+
+def main():
+  """Main function to initiate the process."""
+  config = read_config('sentiment_analysis_config.json')
+  setup_logging('sentiment-analysis.log')
+  model = configure_gemini(config['gemini_api_key'])
+  consumer = create_consumer(config['kafka_bootstrap_servers'], 'youtube_comments_group4', 'earliest', 'youtube_comments')
+  producer = create_producer(config['kafka_bootstrap_servers'])
+  process_messages(consumer, producer, model, 'youtube_sentiments')
+  consumer.close()
+  producer.flush()
+
+if __name__ == "__main__":
+  main()

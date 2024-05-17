@@ -1,4 +1,4 @@
-# Real-Time Sentiment Pipeline for YouTube Comments
+# Real-Time Sentiment Analysis Pipeline for YouTube Comments
 
 
 https://github.com/bunyaminonum/youtube-comments-sentiment-analyses/assets/59376910/0aabda01-a71f-483e-9b31-2ca820727d78

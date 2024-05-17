@@ -1,86 +1,128 @@
-# Real-time Sentiment Analysis Pipeline for YouTube Comments
+# YouTube Comment Sentiment Analysis Pipeline
 
-This project collects YouTube video comments, performs sentiment analysis, and shares "negative" results on a Telegram channel. The project consists of three main components:
+This project is a real-time sentiment analysis pipeline for YouTube comments. It collects comments from YouTube videos, performs sentiment analysis, and shares negative results on a Telegram channel.
 
-## Components
+## Table of Contents
+- [Introduction](#introduction)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Running the Project](#running-the-project)
+- [Project Structure](#project-structure)
+- [License](#license)
 
-1. **Comment Collection and Transfer to Kafka (producer.py)**: The first component collects YouTube video comments and transfers them to Kafka.
-2. **Sentiment Analysis (sentiment-analyses.py)**: The second component performs sentiment analysis on the comments received from Kafka and sends the results to a new Kafka topic.
-3. **Telegram Bot (telegram_bot.py)**: The third component retrieves the sentiment analysis results (negative ones) from Kafka and sends these results to a Telegram channel.
+## Introduction
+This project aims to create a real-time pipeline that collects comments from YouTube videos, performs sentiment analysis on these comments, and shares the negative results on a Telegram channel. The pipeline consists of three main components:
+1. Comment collection and transfer to Kafka.
+2. Sentiment analysis.
+3. Telegram bot for sharing negative comments.
 
-## Installation
+## Features
+- Real-time collection of YouTube comments.
+- Sentiment analysis to classify comments as positive, negative, or neutral.
+- Automatic sharing of negative comments on a specified Telegram channel.
 
-There is a separate configuration file for each Python file. These files contain all the configuration information necessary for the project to run. You need to fill in your configuration files as follows:
+## Getting Started
 
-- **producer_config.json**:
-```json
-{
-    "youtube_api_key": "YOUR_YOUTUBE_API_KEY",
-    "playlist_id": "YOUR_PLAYLIST_ID",
-    "kafka_bootstrap_servers": "YOUR_KAFKA_BOOTSTRAP_SERVERS",
-    "kafka_topic": "youtube_comments"
-}
-```
+### Prerequisites
+- Python 3.6 or higher
+- Kafka
+- KSQL
+- YouTube Data API key
+- Telegram Bot API key
 
-- **sentiment_analysis_config.json**:
-```json
-{
-    "kafka_bootstrap_servers": "YOUR_KAFKA_BOOTSTRAP_SERVERS",
-    "gemini_api_key": "YOUR_GEMINI_API_KEY",
-    "input_topic": "youtube_comments",
-    "output_topic": "youtube_sentiments"
-}
-```
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/bunyaminonum/youtube-comments-sentiment-analyses.git
+   cd youtube-comments-sentiment-analyses
+   ```
 
-- **telegram_bot_config.json**:
-```json
-{
-    "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
-    "kafka_bootstrap_servers": "YOUR_KAFKA_BOOTSTRAP_SERVERS",
-    "kafka_topic": "NEGATIVE_YOUTUBE_SENTIMENTS_STREAM",
-    "telegram_channel_id": "YOUR_TELEGRAM_CHANNEL_ID"
-}
-```
+2. Install the required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Usage
+### Configuration
+1. Fill in the configuration files with your credentials and settings:
+   - `producer_config.json`
+   - `sentiment_analysis_config.json`
+   - `telegram_bot_config.json`
 
-You need to run each Python file separately. Before running the files, make sure you have filled in the relevant configuration files.
+   Example `producer_config.json`:
+   ```json
+   {
+     "youtube_api_key": "YOUR_YOUTUBE_API_KEY",
+     "playlist_id": "YOUR_PLAYLIST_ID",
+     "kafka_bootstrap_servers": "YOUR_KAFKA_BOOTSTRAP_SERVERS",
+     "kafka_topic": "youtube_comments"
+   }
+   ```
 
-```bash
-python producer.py
-python sentiment-analyses.py
-```
+   Example `sentiment_analysis_config.json`:
+   ```json
+   {
+     "kafka_bootstrap_servers": "YOUR_KAFKA_BOOTSTRAP_SERVERS",
+     "gemini_api_key": "YOUR_GEMINI_API_KEY",
+     "input_topic": "youtube_comments",
+     "output_topic": "youtube_sentiments"
+   }
+   ```
 
-After running the above two files, you need to run the following KSQL queries:
+   Example `telegram_bot_config.json`:
+   ```json
+   {
+     "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
+     "kafka_bootstrap_servers": "YOUR_KAFKA_BOOTSTRAP_SERVERS",
+     "kafka_topic": "negative_youtube_sentiments",
+     "telegram_channel_id": "YOUR_TELEGRAM_CHANNEL_ID"
+   }
+   ```
 
-```sql
-CREATE STREAM YOUTUBE_SENTIMENTS_STREAM (
-    ID VARCHAR,
-    TEXT VARCHAR,
-    STATUS VARCHAR,
-    AUTHOR VARCHAR,
-    PUBLISHEDAT VARCHAR,
-    UPDATEDAT VARCHAR,
-    SENTIMENT VARCHAR
-) WITH (
-    KAFKA_TOPIC='youtube_sentiments', 
-    VALUE_FORMAT='JSON'
-);
+### Running the Project
+1. Start the Kafka server and create the necessary topics.
+2. Run the following KSQL queries to create streams:
+   ```sql
+   CREATE STREAM YOUTUBE_SENTIMENTS_STREAM (
+       ID VARCHAR,
+       TEXT VARCHAR,
+       STATUS VARCHAR,
+       AUTHOR VARCHAR,
+       PUBLISHEDAT VARCHAR,
+       UPDATEDAT VARCHAR,
+       VIDEOTITLE VARCHAR,
+       SENTIMENT VARCHAR
+   ) WITH (
+       KAFKA_TOPIC='youtube_sentiments', 
+       VALUE_FORMAT='JSON'
+   );
 
-CREATE STREAM NEGATIVE_YOUTUBE_SENTIMENTS_STREAM AS 
-SELECT * 
-FROM YOUTUBE_SENTIMENTS_STREAM 
-WHERE SENTIMENT='negative';
-```
+   CREATE STREAM NEGATIVE_YOUTUBE_SENTIMENTS_STREAM AS 
+   SELECT * 
+   FROM YOUTUBE_SENTIMENTS_STREAM 
+   WHERE SENTIMENT='negative';
+   ```
 
-Then, you can run the Telegram bot:
+3. Run each Python file separately:
+   ```bash
+   python producer.py
+   python sentiment-analyses.py
+   python telegram_bot.py
+   ```
 
-```bash
-python3 telegram_bot.py
-```
+## Project Structure
+The project consists of the following files:
+
+- `LICENSE`: Contains the project's license information.
+- `README.md`: Provides an overview of the project, its purpose, and usage instructions.
+- `producer.py`: Script for collecting YouTube comments and sending them to Kafka.
+- `producer_config.json`: Configuration file for `producer.py`.
+- `sentiment-analyses.py`: Script for performing sentiment analysis on YouTube comments.
+- `sentiment_analysis_config.json`: Configuration file for `sentiment-analyses.py`.
+- `telegram_bot.py`: Script for sending negative comments to a Telegram channel.
+- `telegram_bot_config.json`: Configuration file for `telegram_bot.py`.
 
 ## License
-
-This project is licensed under the MIT license.
-```
-This README file clearly explains what your project is, how to install it, and how to use it. It also describes what each component of your project does. If there is any other information I need to include, please let me know.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

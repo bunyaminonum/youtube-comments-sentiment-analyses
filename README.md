@@ -1,6 +1,6 @@
 # Real-Time Sentiment Pipeline for YouTube Comments
 
-This project is a real-time sentiment analysis pipeline for YouTube comments. It collects comments from YouTube videos, performs sentiment analysis, and shares negative results on a Telegram channel.
+This project is a real-time sentiment analysis pipeline for YouTube comments. It collects comments from YouTube videos, performs sentiment analysis using the Gemini API, and shares negative results on a Telegram channel.
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -14,14 +14,14 @@ This project is a real-time sentiment analysis pipeline for YouTube comments. It
 - [License](#license)
 
 ## Introduction
-This project aims to create a real-time pipeline that collects comments from YouTube videos, performs sentiment analysis on these comments, and shares the negative results on a Telegram channel. The pipeline consists of three main components:
+This project aims to create a real-time pipeline that collects comments from YouTube videos, performs sentiment analysis on these comments using the Gemini API, and shares the negative results on a Telegram channel. The pipeline consists of three main components:
 1. Comment collection and transfer to Kafka.
-2. Sentiment analysis.
+2. Sentiment analysis using the Gemini API.
 3. Telegram bot for sharing negative comments.
 
 ## Features
 - Real-time collection of YouTube comments.
-- Sentiment analysis to classify comments as positive, negative, or neutral.
+- Sentiment analysis using the Gemini API to classify comments as positive, negative, or neutral.
 - Automatic sharing of negative comments on a specified Telegram channel.
 
 ## Getting Started
@@ -31,6 +31,7 @@ This project aims to create a real-time pipeline that collects comments from You
 - Kafka
 - KSQL
 - YouTube Data API key
+- Gemini API key
 - Telegram Bot API key
 
 ### Installation
@@ -119,7 +120,7 @@ The project consists of the following files:
 - `README.md`: Provides an overview of the project, its purpose, and usage instructions.
 - `producer.py`: Script for collecting YouTube comments and sending them to Kafka.
 - `producer_config.json`: Configuration file for `producer.py`.
-- `sentiment-analyses.py`: Script for performing sentiment analysis on YouTube comments.
+- `sentiment-analyses.py`: Script for performing sentiment analysis on YouTube comments using the Gemini API.
 - `sentiment_analysis_config.json`: Configuration file for `sentiment-analyses.py`.
 - `telegram_bot.py`: Script for sending negative comments to a Telegram channel.
 - `telegram_bot_config.json`: Configuration file for `telegram_bot.py`.

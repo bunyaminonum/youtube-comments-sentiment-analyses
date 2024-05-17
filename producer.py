@@ -120,7 +120,7 @@ def main():
   while True:
     get_playlist_videos(config['playlist_id'], youtube, producer, kafka_topic)  # Pass the Kafka topic to the function
     logging.info('Comments checked, waiting for 1 hour...')
-    time.sleep(60*60)  # Check every hour
+    time.sleep(60)  # Check every 1 minute
 
 if __name__ == "__main__":
   main()

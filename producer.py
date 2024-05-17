@@ -52,6 +52,14 @@ def get_comments(video_id, youtube, producer, kafka_topic):
       published_at = comment["snippet"]["publishedAt"]
       updated_at = comment["snippet"]["updatedAt"]
 
+      # Get the video title
+      video_title_request = youtube.videos().list(
+          part="snippet",
+          id=video_id
+      )
+      video_title_response = video_title_request.execute()
+      video_title = video_title_response["items"][0]["snippet"]["title"]
+
       # If the comment already exists, check its status
       if comment_id in comments:
         old_text = comments[comment_id]['text']
@@ -64,7 +72,7 @@ def get_comments(video_id, youtube, producer, kafka_topic):
       else:
         # New comment
         logging.info(f'New comment {comment_id} found')
-        comments[comment_id] = {'id': comment_id, 'text': text, 'status': 'new', 'author': author, 'publishedAt': published_at, 'updatedAt': updated_at}  # Add the ID, author, and published time
+        comments[comment_id] = {'id': comment_id, 'text': text, 'status': 'new', 'author': author, 'publishedAt': published_at, 'updatedAt': updated_at, 'videoTitle': video_title}  # Add the ID, author, published time, and video title
 
       # Send the comment's status to Kafka
       producer.produce(kafka_topic, key=comment_id, value=json.dumps(comments[comment_id]).encode('utf-8'), callback=delivery_report)
@@ -116,4 +124,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-

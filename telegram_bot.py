@@ -45,6 +45,7 @@ async def send_message(message):
         f"Author: {message['AUTHOR']}\n\n"
         f"Published At: {format_datetime(message['PUBLISHEDAT'])}\n\n"
         f"Updated At: {format_datetime(message['UPDATEDAT'])}\n\n"
+        f"Video Title: {message['VIDEOTITLE']}\n\n"  # Add the video title
         f"Sentiment: {message['SENTIMENT']}\n\n"
     )
     try:
@@ -52,6 +53,7 @@ async def send_message(message):
         logging.info(f"Message sent to Telegram channel: {channel_id}")
     except Exception as e:
         logging.error(f"Error sending message to Telegram channel: {e}")
+
 
 async def main():
     """Main function to handle message consumption and sending."""
@@ -66,7 +68,7 @@ async def main():
         message = json.loads(msg.value().decode('utf-8'))
         logging.info(f"Received message from Kafka: {message}")
         await send_message(message)
-        sleep(2)  # Adjust the sleep duration as needed
+        sleep(3)  # Adjust the sleep duration as needed
 
 if __name__ == '__main__':
     asyncio.run(main())

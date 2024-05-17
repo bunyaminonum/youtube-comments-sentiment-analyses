@@ -107,7 +107,7 @@ def main():
   config = read_config('sentiment_analysis_config.json')
   setup_logging('sentiment-analysis.log')
   model = configure_gemini(config['gemini_api_key'])
-  consumer = create_consumer(config['kafka_bootstrap_servers'], 'youtube_comments_group4', 'earliest', 'youtube_comments')
+  consumer = create_consumer(config['kafka_bootstrap_servers'], 'youtube_comments_group', 'earliest', 'youtube_comments')
   producer = create_producer(config['kafka_bootstrap_servers'])
   process_messages(consumer, producer, model, 'youtube_sentiments')
   consumer.close()

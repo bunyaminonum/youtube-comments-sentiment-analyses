@@ -1,4 +1,4 @@
-# YouTube Comment Sentiment Analysis Pipeline
+# Real-Time Sentiment Pipeline for YouTube Comments
 
 This project is a real-time sentiment analysis pipeline for YouTube comments. It collects comments from YouTube videos, performs sentiment analysis, and shares negative results on a Telegram channel.
 

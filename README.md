@@ -3,7 +3,7 @@
 
 https://github.com/bunyaminonum/youtube-comments-sentiment-analyses/assets/59376910/0aabda01-a71f-483e-9b31-2ca820727d78
 
-![youtube_comments_realtime_processing_diagram](https://github.com/bunyaminonum/youtube-comments-sentiment-analyses/assets/59376910/0daaeb0b-2e7e-4e44-a977-8cfb157f67ed)
+![youtube_comments_realtime_processing_diagram](https://github.com/bunyaminonum/youtube-comments-sentiment-analyses/assets/59376910/df592001-99c7-4af8-bf02-882339c1041c)
 
 
 This project is a real-time sentiment analysis pipeline for YouTube comments. It collects comments from YouTube videos, performs sentiment analysis using the Gemini API, and shares negative results on a Telegram channel.

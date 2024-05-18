@@ -1,6 +1,6 @@
 # Real-Time Sentiment Analysis Pipeline for YouTube Comments
 
-![Screenshot_1](https://github.com/bunyaminonum/youtube-comments-sentiment-analyses/assets/59376910/d9a8957a-9773-4713-a059-1636b1cade29)
+![youtube_comments_realtime_processing_diagram](https://github.com/bunyaminonum/youtube-comments-sentiment-analyses/assets/59376910/3a3ff17d-39e7-44f3-b8d4-924409025b87)
 
 https://github.com/bunyaminonum/youtube-comments-sentiment-analyses/assets/59376910/0aabda01-a71f-483e-9b31-2ca820727d78
 
